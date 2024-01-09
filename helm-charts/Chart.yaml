@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Main chart for python app
+name: python-app
+version: 0.0.0

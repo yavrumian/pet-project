@@ -1,0 +1,5 @@
+image:
+  # The service image repository
+  repository: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}"
+  # Overrides the service image tag whose default is the chart version
+  tag: ${SHA1}

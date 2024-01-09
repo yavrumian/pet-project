@@ -1,0 +1,20 @@
+{{- if .Values.envconfigmap }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{include "service.fullname" .}}-env"
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+data: 
+
+{{- with .Files.Lines .Values.envconfigmap.filename }}
+{{- range $line := . }}
+{{- $parts := split "=" $line }}
+{{- if $parts._0}}
+{{- $key := $parts._0 | trim |  quote }}
+{{- $value := $parts._1 | trim | quote }}
+{{- printf "%s: %s" $key $value | nindent 2}}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

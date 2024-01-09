@@ -1,0 +1,70 @@
+{{- $root := . -}}
+{{- if .Values.hooks.enabled -}}
+{{- range $index, $hook := .Values.hooks.jobs }}
+{{- if $hook.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ $root.Release.Name }}-{{ $hook.name }}"
+  namespace: {{ $root.Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ $root.Release.Service | quote }}
+    app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
+    app.kubernetes.io/version: {{ $root.Values.image.tag | quote }}
+    helm.sh/chart: "{{ $root.Chart.Name }}-{{ $root.Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook Without this line, the job is considered part of the release.
+    "helm.sh/hook": {{ default $hook.type "pre-install" | quote }}
+    "helm.sh/hook-weight": "{{ add1 $index }}"
+    "helm.sh/hook-delete-policy": {{ default $hook.deletePolicy "before-hook-creation, hook-succeeded" | quote }}
+spec:
+  ttlSecondsAfterFinished: 360
+  template:
+    metadata:
+      name: "{{ $root.Release.Name }}-{{ $hook.name }}"
+      labels:
+        app.kubernetes.io/managed-by: {{ $root.Release.Service | quote }}
+        app.kubernetes.io/instance: {{ $root.Release.Name | quote }}
+        helm.sh/chart: "{{ $root.Chart.Name }}-{{ $root.Chart.Version }}"
+      annotations:
+        {{- range $key, $value := .annotations }}
+        {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
+        {{- end }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: default
+      containers:
+        - name: "{{ $hook.name }}"
+          image: {{ .image | quote }}
+          imagePullPolicy: "Always"
+          command:
+            {{- toYaml .command | nindent 12 }}
+          volumeMounts:
+            - name: podinfo
+              mountPath: /etc/podinfo
+          env:
+          {{- with .env }}
+          {{- tpl . $ | nindent 12 }}
+          {{- end }}
+          {{- range $key, $value := .envMap }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+          {{- end }}
+          
+      volumes:
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: namespace
+                fieldRef:
+                  fieldPath: metadata.namespace
+              - path: labels
+                fieldRef:
+                  fieldPath: metadata.labels
+              - path: annotations
+                fieldRef:
+                  fieldPath: metadata.annotations
+{{- end -}}
+{{- end -}}
+{{- end -}}

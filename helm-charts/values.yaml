@@ -1,0 +1,299 @@
+# Optionally override the fully qualified name
+fullnameOverride: "python-app"
+
+# Optionally override the name
+nameOverride: "python-app"
+
+# The number of replicas to create (has no effect if autoscaling enabled)
+replicas: 1
+
+helmDefaultLableSelectors: true
+
+image:
+  # The service image repository
+  repository: "617686195573.dkr.ecr.ap-northeast-3.amazonaws.com/development-python-app"
+  # Overrides the service image tag whose default is the chart version
+  tag: "latest"
+  # The service image pull policy
+  pullPolicy: "Always"
+
+hooks:
+  enabled: false
+  jobs: []
+
+
+# Image pull secrets for the Pod
+imagePullSecrets: []
+# - name: myRegistrKeySecretName
+
+updateStrategy: RollingUpdate
+
+# Mapping between IPs and hostnames that will be injected as entries in the Pod's hosts files
+hostAliases: []
+# - ip: "1.2.3.4"
+#   hostnames:
+#     - "my.host.com"
+
+# Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
+enableServiceLinks: true
+
+# Pod restart policy. One of `Always`, `OnFailure`, or `Never`
+restartPolicy: Always
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "app-role"
+  # Additional annotations for the ServiceAccount
+  annotations: {eks.amazonaws.com/role-arn: arn:aws:iam::617686195573:role/python-app-eks-role}
+  # Additional labels for the ServiceAccount
+  labels: {}
+  # Image pull secrets that are attached to the ServiceAccount
+  imagePullSecrets: []
+
+# RBAC rules for KUBE_PING
+rbac:
+  create: false
+  # Can be either "ClusterRole" or "Role". Default is Role
+  kind: "Role"
+  rules: []
+
+# SecurityContext for the entire Pod. Every container running in the Pod will inherit this SecurityContext. This might be relevant when other components of the environment inject additional containers into running Pods (service meshes are the most prominent example for this)
+podSecurityContext: {}
+  # fsGroup: 1000
+
+# SecurityContext for the service container
+securityContext: {}
+  # runAsUser: 1000
+  # runAsNonRoot: true
+
+# Additional init containers, e. g. for providing custom themes
+extraInitContainers: ""
+
+# Additional sidecar containers, e. g. for a database proxy, such as Google's cloudsql-proxy
+extraContainers: ""
+
+# Lifecycle hooks for the service container
+lifecycleHooks: ""
+#  postStart:
+#    exec:
+#      command:
+#        - /bin/sh
+#        - -c
+#        - ls
+
+# Termination grace period in seconds for service shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
+terminationGracePeriodSeconds: 60
+
+# The internal Kubernetes cluster domain
+clusterDomain: cluster.local
+
+## Overrides the default entrypoint of the service container
+command: []
+
+## Overrides the default args for the service container
+args: []
+
+# Environment variables for service
+Env: ""
+
+# Environment vaiables that could be listed as key value pairs
+EnvMap: {}
+
+# Equivalet of envFrom of kubernetes pod
+EnvFrom: ""
+
+#  Pod priority class name
+priorityClassName: ""
+
+# Pod affinity
+affinity: ""
+
+# Node labels for Pod assignment
+nodeSelector: {}
+
+# Node taints to tolerate
+tolerations: []
+
+# Additional Pod labels
+podLabels: {}
+
+# Additional Pod annotations
+podAnnotations: {}
+  # linkerd.io/inject: disabled
+
+# Liveness probe configuration
+livenessProbe: |
+ httpGet:
+    path: /health
+    port: 5000
+
+# Readiness probe configuration
+readinessProbe: ""
+
+# Pod resource requests and limits
+resources: 
+  requests:
+    cpu: "250m"
+    memory: "120Mi"
+  limits:
+    cpu: "350m"
+    memory: "150Mi"
+
+# Add additional volumes, e. g. for custom themes
+extraVolumes: ""
+# Add additional volumes mounts, e. g. for custom themes
+extraVolumeMounts: ""
+
+# Add additional ports, e. g. for admin console or exposing JGroups ports
+extraPorts:
+  - name: be
+    containerPort: 5000
+    protocol: TCP
+
+# Pod disruption budget
+podDisruptionBudget: {}
+#  maxUnavailable: 1
+#  minAvailable: 1
+
+# Annotations for the deployment
+deploymentAnnotations: {}
+
+# Additional labels for the deployment
+deploymentLabels: {}
+
+service:
+  # Annotations for headless and HTTP Services
+  annotations: {}
+  # Additional labels for headless and HTTP Services
+  labels: {}
+  # key: value
+  # The Service type
+  type: ClusterIP
+  # Optional IP for the load balancer. Used for services of type LoadBalancer only
+  loadBalancerIP: ""
+  # The WildFly management Service node port if type is NodePort
+  # Service ports
+  extraPorts: 
+        - name: http
+          port: 80
+          protocol: TCP
+          targetPort: 5000
+  # When using Service type LoadBalancer, you can restrict source ranges allowed
+  # to connect to the LoadBalancer, e. g. will result in Security Groups
+  # (or equivalent) with inbound source ranges allowed to connect
+  loadBalancerSourceRanges: []
+  # Session affinity
+  # See https://kubernetes.io/docs/concepts/services-networking/service/#proxy-mode-userspace
+  sessionAffinity: ""
+  # Session affinity config
+  sessionAffinityConfig: {}
+
+ingress:
+  # If `true`, an Ingress is created
+  enabled: true
+  # Ingress class name
+  className: "nginx"
+  # Ingress annotations
+  annotations: {}
+  # Additional Ingress labels
+  labels: {}
+  # List of rules for the Ingress
+  hosts: 
+  - name: "a09e423804d154be0b270ee29939cd94-bcabbf83bf4ea9de.elb.ap-northeast-3.amazonaws.com"
+    port: "http"
+    path: /
+  # TLS configuration
+  tls: []
+
+## Network policy configuration
+networkPolicy:
+  enabled: false
+  labels: {}
+
+  # Define all other external allowed source
+  # See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#networkpolicypeer-v1-networking-k8s-io
+  From: []
+  Ports: []
+
+
+autoscaling:
+  # If `true`, a autoscaling/v2beta2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.18 or above)
+  # Autoscaling seems to be most reliable when using KUBE_PING service discovery (see README for details)
+  # This disables the `replicas` field in the deployment
+  enabled: false
+  # Additional HorizontalPodAutoscaler labels
+  labels: {}
+  # The minimum and maximum number of replicas for the service deployment
+  minReplicas: 2
+  maxReplicas: 4
+  # The metrics to use for scaling
+  metrics: []
+    # - type: Resource
+    #   resource:
+    #     name: memory
+    #     target:
+    #       type: Utilization
+    #       averageUtilization: 80
+  # The scaling policy to use. This will scale up quickly but only scale down a single Pod per 5 minutes.
+  # This is important because caches are usually only replicated to 2 Pods and if one of those Pods is terminated this will give the cluster time to recover.
+  behavior: {}
+    # scaleDown:
+    #   stabilizationWindowSeconds: 300
+    #   policies: []
+    #     # - type: Pods
+    #     #   value: 1
+    #     #   periodSeconds: 300
+
+worker:
+  # If `true`, a worker deployment will created
+  enabled: false
+  # The number of replicas to create
+  replicas: 2
+  updateStrategy: RollingUpdate
+
+  # Pod resource requests and limits
+  resources: {}
+  #   requests:
+  #     cpu: ""
+  #     memory: ""
+  #   limits:
+  #     cpu: ""
+  #     memory: ""
+
+  # Additional labels for the Deployment
+  labels: {}
+  podLabels: {}
+
+  # Pod affinity
+  affinity: ""
+
+  # Node labels for Pod assignment
+  nodeSelector: {}
+
+  # Node taints to tolerate
+  tolerations: []
+
+  # Termination grace period in seconds for service shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
+  terminationGracePeriodSeconds: 60
+
+
+# Configmap
+configmap: {}
+
+keda:
+  enabled: true
+  type: "cpu"
+  min: 1
+  max: 5
+
+secretproviderclass:
+  enabled: true
+  name: "python-app"
+
+# Env Configmap
+envconfigmap: {
+  filename: ".env"
+}

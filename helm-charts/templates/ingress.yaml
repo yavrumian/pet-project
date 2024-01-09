@@ -1,0 +1,42 @@
+{{- $ingress := .Values.ingress -}}
+{{- if $ingress.enabled -}}
+apiVersion: {{ include "service.ingressAPIVersion" . }}
+kind: Ingress
+metadata:
+  name: "{{ include "service.fullname" . }}-ingress"
+  namespace: {{ .Release.Namespace }}
+  {{- with $ingress.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    {{- range $key, $value := $ingress.labels }}
+    {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }} 
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- with $ingress.tls }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+  - host: {{ .name }}
+    http:
+      paths:
+      - path: {{ default "/" .path }}
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "service.fullname" $ }}
+            port:
+              name: {{ .port }}
+  {{- end }}
+{{- end }}

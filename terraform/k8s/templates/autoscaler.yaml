@@ -1,0 +1,19 @@
+rbac:
+  create: true
+  serviceAccount:
+    create: true
+    annotations: {
+      "eks.amazonaws.com/role-arn": "${role_arn}"
+    }
+
+cloudProvider: aws
+awsRegion: ${aws_region}
+
+autoDiscovery:
+  enabled: true
+  clusterName: ${cluster_name}
+
+extraArgs:
+  logtostderr: true
+  stderrthreshold: info
+  v: 4

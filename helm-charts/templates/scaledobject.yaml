@@ -1,0 +1,17 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "service.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  minReplicaCount: {{ .Values.keda.min }}
+  maxReplicaCount: {{ .Values.keda.max }}
+  scaleTargetRef:
+    name: {{ include "service.fullname" . }}
+  triggers:
+  - type: {{ .Values.keda.type }}
+    metricType: Utilization
+    metadata:
+      value: "50"
+{{- end }}
