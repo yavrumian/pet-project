@@ -5,8 +5,6 @@ Pet Project
 with Terraform, Helm, EKS and GitHub Actions on AWS
 </h2>
 
-![alt text](https://naviteq-banner.s3.eu-west-1.amazonaws.com/banner%201.png)
-
 ---
 
 ### About
